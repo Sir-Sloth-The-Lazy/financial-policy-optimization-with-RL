@@ -51,7 +51,7 @@ We built a **Multi-Layer Perceptron (MLP)** Classifier to predict the likelihood
 ### Results
 
 The model achieved an **F1 Score of 0.45**, significantly outperforming baseline Logistic Regression (0.31).
-![ROC Curve](roc_curve_dl.png)
+![ROC Curve](roc_comparison_all.png)
 _The DL model (AUC 0.75) effectively ranks borrowers by risk._
 
 ---
