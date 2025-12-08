@@ -54,6 +54,11 @@ The model achieved an **F1 Score of 0.45**, significantly outperforming baseline
 ![ROC Curve](roc_comparison_all.png)
 _The DL model (AUC 0.75) effectively ranks borrowers by risk._
 
+### Precision-Recall Performance
+
+![Confusion Matrix](confusion_matrix_dl.png)
+_The weighted loss function prioritizes catching defaults (high Recall on Class 1), even at the cost of some False Positives._
+
 ---
 
 ## 🤖 Approach 2: Offline Reinforcement Learning
