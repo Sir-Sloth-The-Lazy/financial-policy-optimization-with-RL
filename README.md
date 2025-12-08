@@ -11,7 +11,8 @@ A comprehensive project exploring the transition from **Supervised Deep Learning
 
 ## 📌 Project Overview
 
-The goal of this project is to build an automated decision system for loan approvals. We aim to minimize defaults while maximizing interest profit.
+The goal of this project is to build an automated decision system for loan approvals using the [Lending Club Dataset](https://www.kaggle.com/wordsforthewise/lending-club). We aim to minimize defaults while maximizing interest profit.
+
 We compare two distinct approaches:
 
 1.  **Deep Learning (Supervised)**: Predicting the _Probability of Default_ and thresholding it.
@@ -19,72 +20,73 @@ We compare two distinct approaches:
 
 ---
 
-## 🚀 Key Results
+## 📊 Exploratory Data Analysis (EDA)
+
+Before modeling, we performed a deep dive into the dataset to understand the risk factors.
+
+### 1. Feature Correlations
+
+We found that **Interest Rate** is the single strongest predictor of default (+0.31 correlation). This makes sense: risky borrowers are charged higher rates.
+![Correlation Matrix](correlation_matrix.png)
+
+### 2. The "Yield" Trap
+
+Higher interest rates are correlated with higher default rates. A naive algorithm might chase the high yields (interest) without fully accounting for the loss of principal (default).
+![Interest Rate Distribution](dist_int_rate.png)
+_Orange: Charged Off (Default), Blue: Fully Paid. Note the shift to the right for defaults._
+
+---
+
+## 🧠 Approach 1: Supervised Deep Learning
+
+We built a **Multi-Layer Perceptron (MLP)** Classifier to predict the likelihood of a borrower defaulting.
+
+### Model Architecture
+
+- **Input**: 149 features (after One-Hot Encoding).
+- **Hidden Layers**: 2 layers (128 units, 64 units) with ReLU and BatchNorm.
+- **Regularization**: Dropout (0.3).
+- **Optimization**: **Weighted BCE Loss** (`pos_weight=4.0`) was critical to handle the class imbalance (Defaults are rare, ~20%).
+
+### Results
+
+The model achieved an **F1 Score of 0.45**, significantly outperforming baseline Logistic Regression (0.31).
+![ROC Curve](roc_curve_dl.png)
+_The DL model (AUC 0.75) effectively ranks borrowers by risk._
+
+---
+
+## 🤖 Approach 2: Offline Reinforcement Learning
+
+We then framed the problem as a Markov Decision Process (MDP) to see if an RL agent could learn a better policy than "Predict & Threshold".
+
+- **State**: 149 Borrower Features.
+- **Action**: Approve (1) or Deny (0).
+- **Reward**:
+  - If Paid: `Loan Amount * Interest Rate` (Profit)
+  - If Default: `-1.0 * Loan Amount` (Loss of Principal).
+
+### The Challenge: Behavioral Bias
+
+We trained a **Conservative Q-Learning (CQL)** agent. However, because the dataset only contains _approved_ loans (we don't know the outcome of rejected loans), the agent struggled to learn the "Deny" action effectively.
+
+![Risk vs Reward](risk_reward_comparison.png)
+_X-axis: DL Predicted Risk. Y-axis: RL Estimated Value._
+
+> **Insight**: The RL agent (Y-axis) assigns HIGH value to many loans that the DL model (X-axis) identifies as VERY RISKY (>0.8 probability). This confirms the agent is **"Yield Chasing"**—it sees the high interest rate and bets on it, ignoring the risk.
+
+---
+
+## 🚀 Key Results & Conclusion
 
 | Metric            |    Deep Learning (v3)     | RL Agent (v3 - Best) | Baseline (Approve All) |
 | :---------------- | :-----------------------: | :------------------: | :--------------------: |
 | **Approach**      |     Weighted BCE Loss     |   Grid-Search CQL    |         Naive          |
 | **Approval Rate** | **57.70%** (Conservative) |  ~90% (Aggressive)   |          100%          |
-| **F1 Score**      |  **0.45** (High Recall)   |         N/A          |          0.31          |
 | **Policy Value**  |        **-$1.66M**        |       -$12.0M        |         -$26M          |
 | **Verdict**       |      🏆 **Champion**      |       ⚠️ Risky       |        ❌ Fail         |
 
-> **Key Insight**: The Offline RL agent suffered from **"Yield Chasing"**. Because the training data only contained \*approved\_ loans, the agent learned to associate high interest rates with high rewards, ignoring the subtle risk signals that the Deep Learning model successfully captured.
-
----
-
-## 🛠️ Technology Stack
-
-- **Deep Learning**: `PyTorch` (MLP Classifier)
-- **Reinforcement Learning**: `d3rlpy` (Discrete CQL), `Gymnasium`
-- **Data Pipeline**: `Pandas`, `NumPy`, `Scikit-Learn` (Imputation, Scaling, Encoding)
-- **Visualization**: `Matplotlib`, `Seaborn`
-
----
-
-## 📈 Project Journey
-
-### Phase 1: Unsupervised Analysis & EDA
-
-Analysing `accepted_2007_to_2018.csv` (2.2M rows total).
-
-- **Findings**:
-  - Default Rate: ~19.9%.
-  - **Interest Rate**: Strongest correlation with default (+0.31).
-  - **Graded Risk**: Monotonic relationship (Grade A < G).
-
-### Phase 2: Supervised Deep Learning
-
-Built an MLP to predict `PW(Default | Features)`.
-
-- **Optimization**: Used `pos_weight=4.0` to handle class imbalance (defaults are rare but costly).
-- **Result**: F1 Score **0.45**. Effective at filtering high-risk borrowers.
-
-### Phase 3: Offline Reinforcement Learning
-
-Framed as an MDP (State: 149 features, Action: Approve/Deny, Reward: Profit/Loss).
-
-- **CQL (Conservative Q-Learning)**: Tested various "Alpha" values.
-- **Fail Mode**: The agent struggled to learn conservatism because the dataset lacked "Deny" examples (Behavioral Bias). Even with synthetic penalties, it prioritized high-yield loans.
-
----
-
-## 📂 Repository Structure
-
-```bash
-.
-├── notebooks/
-│   ├── colab_runner.ipynb       # <--- START HERE for A100 Run
-│   └── 10_detailed_analysis.py  # Divergence Study
-├── src/
-│   ├── models.py           # PyTorch Architecture
-│   ├── train_dl.py         # Deep Learning Training
-│   ├── train_rl_grid.py    # RL Grid Search
-│   ├── preprocessing.py    # Scikit-learn Pipeline
-│   └── ...
-├── requirements.txt
-└── README.md
-```
+**Conclusion**: The **Deep Learning classifier** is the superior policy engine for this dataset. Offline RL requires either negative samples (rejected loans with outcomes) or a high-fidelity simulator to learn a truly safe policy.
 
 ---
 
