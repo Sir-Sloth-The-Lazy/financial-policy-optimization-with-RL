@@ -81,12 +81,15 @@ _X-axis: DL Predicted Risk. Y-axis: RL Estimated Value._
 
 ![Model Comparison](model_comparison.png)
 
-| Metric            |    Deep Learning (v3)     | RL Agent (v3 - Best) | Baseline (Approve All) |
-| :---------------- | :-----------------------: | :------------------: | :--------------------: |
-| **Approach**      |     Weighted BCE Loss     |   Grid-Search CQL    |         Naive          |
-| **Approval Rate** | **57.70%** (Conservative) |  ~90% (Aggressive)   |          100%          |
-| **Policy Value**  |        **-$1.66M**        |       -$12.0M        |         -$26M          |
-| **Verdict**       |      🏆 **Champion**      |       ⚠️ Risky       |        ❌ Fail         |
+| Category         | Model                     | Approval Rate | Policy Value |
+| :--------------- | :------------------------ | :-----------: | :----------: |
+| **Supervised**   | **Deep Learning (v3)**    |   **57.7%**   | **-$1.66M**  |
+| **Unsupervised** | Baseline (Approve All)    |     100%      |   -$26.0M    |
+| **RL (Offline)** | RL Agent (Best of Grid)   |     90.0%     |   -$12.0M    |
+| **RL (Offline)** | RL Agent (Risk-Sensitive) |     93.2%     |   -$15.1M    |
+| **RL (Offline)** | RL Agent (CQL Baseline)   |     91.3%     |   -$11.1M    |
+
+> **Verdict**: The **Supervised** approach (Deep Learning) vastly outperforms both the **Unsupervised** baseline and all **Reinforcement Learning** agents on this dataset.
 
 **Conclusion**: The **Deep Learning classifier** is the superior policy engine for this dataset. Offline RL requires either negative samples (rejected loans with outcomes) or a high-fidelity simulator to learn a truly safe policy.
 

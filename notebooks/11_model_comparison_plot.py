@@ -29,11 +29,11 @@ def plot_comparison():
             57.70
         ],
         'Type': [
-            'Baseline',
+            'Unsupervised (Baseline)',
             'Reinforcement Learning',
             'Reinforcement Learning',
             'Reinforcement Learning',
-            'Deep Learning'
+            'Supervised (Deep Learning)'
         ]
     }
     
@@ -43,7 +43,11 @@ def plot_comparison():
     fig, ax1 = plt.subplots(figsize=(12, 6))
     
     # Bar plot for Policy Value
-    palette = {'Baseline': 'gray', 'Reinforcement Learning': 'salmon', 'Deep Learning': 'royalblue'}
+    palette = {
+        'Unsupervised (Baseline)': 'gray', 
+        'Reinforcement Learning': 'salmon', 
+        'Supervised (Deep Learning)': 'royalblue'
+    }
     sns.barplot(
         data=df, 
         y='Model', 
