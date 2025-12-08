@@ -1,5 +1,12 @@
 # Financial Policy Optimization with Reinforcement Learning
 
+![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)
+![Scikit-Learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=flat&logo=scikit-learn&logoColor=white)
+![d3rlpy](https://img.shields.io/badge/d3rlpy-Offline_RL-blue)
+![Colab](https://img.shields.io/badge/Google_Colab-A100_Ready-orange?logo=googlecolab)
+![Status](https://img.shields.io/badge/Status-Complete-green)
+
 A comprehensive project exploring the transition from **Supervised Deep Learning** to **Offline Reinforcement Learning** for optimizing loan approval policies.
 
 ## 📌 Project Overview
@@ -22,93 +29,74 @@ We compare two distinct approaches:
 | **Policy Value**  |        **-$1.66M**        |       -$12.0M        |         -$26M          |
 | **Verdict**       |      🏆 **Champion**      |       ⚠️ Risky       |        ❌ Fail         |
 
-> **Key Insight**: The Offline RL agent suffered from **"Yield Chasing"**. Because the training data only contained _approved_ loans (Positive-Unlabeled bias), the agent learned to associate high interest rates with high rewards, ignoring the subtle risk signals that the Deep Learning model successfully captured.
+> **Key Insight**: The Offline RL agent suffered from **"Yield Chasing"**. Because the training data only contained \*approved\_ loans, the agent learned to associate high interest rates with high rewards, ignoring the subtle risk signals that the Deep Learning model successfully captured.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Languages**: Python 3.10+
-- **Deep Learning**: PyTorch
+- **Deep Learning**: `PyTorch` (MLP Classifier)
 - **Reinforcement Learning**: `d3rlpy` (Discrete CQL), `Gymnasium`
-- **Data Processing**: Pandas, NumPy, Scikit-Learn
-- **Visualization**: Matplotlib, Seaborn
+- **Data Pipeline**: `Pandas`, `NumPy`, `Scikit-Learn` (Imputation, Scaling, Encoding)
+- **Visualization**: `Matplotlib`, `Seaborn`
 
 ---
 
-## 📈 Project Journey (Step-by-Step)
+## 📈 Project Journey
 
 ### Phase 1: Unsupervised Analysis & EDA
 
-Before modeling, we deeply analyzed the dataset (`accepted_2007_to_2018.csv`) to understand the risk factors.
+Analysing `accepted_2007_to_2018.csv` (2.2M rows total).
 
 - **Findings**:
   - Default Rate: ~19.9%.
   - **Interest Rate**: Strongest correlation with default (+0.31).
-  - **Income Skew**: Annual income was highly right-skewed (log-transform required).
-  - **Grade**: Monotonic relationship (Grade A defaults < Grade G).
+  - **Graded Risk**: Monotonic relationship (Grade A < G).
 
-### Phase 2: Supervised Deep Learning (The Classifier)
+### Phase 2: Supervised Deep Learning
 
-We built a Multi-Layer Perceptron (MLP) to predict `PW(Default | Features)`.
+Built an MLP to predict `PW(Default | Features)`.
 
-- **v1 (Baseline)**: Standard BCE Loss. Good AUC (0.75) but low Recall (F1 0.31).
-- **v2 (Advanced Features)**: Added feature engineering (ratios, log-transforms). Performance remained similar.
-- **v3 (Targeted Refinement)**:
-  - **Class Imbalance**: Applied `pos_weight=4.0` to the loss function to penalize missing a default 4x more than a false alarm.
-  - **Outlier Clipping**: Capped income and revolving balance.
-  - **Result**: F1 Score jumped to **0.45**. This model effectively filters out risky borrowers.
+- **Optimization**: Used `pos_weight=4.0` to handle class imbalance (defaults are rare but costly).
+- **Result**: F1 Score **0.45**. Effective at filtering high-risk borrowers.
 
-### Phase 3: Offline Reinforcement Learning (The Agent)
+### Phase 3: Offline Reinforcement Learning
 
-We framed the problem as a Markov Decision Process (MDP):
+Framed as an MDP (State: 149 features, Action: Approve/Deny, Reward: Profit/Loss).
 
-- **State**: 143 Preprocessed Features.
-- **Action**: 0 (Deny), 1 (Approve).
-- **Reward**: `Interest` (if Paid) vs `-Principal` (if Default).
-
-#### Iteration 1: Risk Neutral (CQL)
-
-- **Settings**: Standard Conservative Q-Learning.
-- **Outcome**: Approval Rate 91%. The agent approved almost everyone, chasing the high interest rates of risky loans.
-- **Value**: -$11M (Better than baseline, but worse than DL).
-
-#### Iteration 2: Risk Sensitive (Reward Shaping)
-
-- **Settings**: Augmented State with DL Probabilities + **5x Penalty** for Default.
-- **Hypothesis**: A huge penalty would force conservatism.
-- **Outcome**: Failed. Approval Rate increased to 93%. The agent ignored the penalty because it rarely saw "Deny" actions in the dataset (Behavioral Cloning bias).
-
-#### Iteration 3: Hyperparameter Grid Search
-
-- **Settings**: Tested 9 combinations of Penalty (1x, 2x, 5x) and Conservatism (Alpha 0.5, 2.0, 10.0).
-- **Outcome**: Even the most paranoid agent (Alpha 10.0) approved ~90% of loans.
-- **Conclusion**: Offline RL cannot easily unlearn the "Approve" bias from a dataset of only accepted applications.
+- **CQL (Conservative Q-Learning)**: Tested various "Alpha" values.
+- **Fail Mode**: The agent struggled to learn conservatism because the dataset lacked "Deny" examples (Behavioral Bias). Even with synthetic penalties, it prioritized high-yield loans.
 
 ---
 
 ## 📂 Repository Structure
 
-```
+```bash
 .
-├── data/                   # (Ignored) Raw and Processed data
-├── logs/                   # Training logs
-├── models/                 # Saved PyTorch and d3rlpy models
-├── notebooks/              # Analysis and Visualization
+├── notebooks/
+│   ├── colab_runner.ipynb       # <--- START HERE for A100 Run
 │   └── 10_detailed_analysis.py  # Divergence Study
 ├── src/
-│   ├── dataset.py          # PyTorch LoanDataset
-│   ├── models.py           # MLP Architecture
-│   ├── preprocessing.py    # Scikit-learn Pipelines
-│   ├── rl_preprocessing.py # MDP Construction
-│   ├── train_dl.py         # Deep Learning Training Loop
-│   ├── train_rl_grid.py    # Grid Search Script
-│   └── utils.py
+│   ├── models.py           # PyTorch Architecture
+│   ├── train_dl.py         # Deep Learning Training
+│   ├── train_rl_grid.py    # RL Grid Search
+│   ├── preprocessing.py    # Scikit-learn Pipeline
+│   └── ...
 ├── requirements.txt
 └── README.md
 ```
 
+---
+
 ## 🔧 How to Run
+
+### Option A: Google Colab (Recommended for A100)
+
+1.  Open [notebooks/colab_runner.ipynb](notebooks/colab_runner.ipynb) in Google Colab.
+2.  Upload `accepted_2007_to_2018.csv` to the session storage.
+3.  Run all cells. This will execute the full pipeline (Preprocessing -> DL Training -> RL Training).
+
+### Option B: Local Execution
 
 1. **Install Dependencies**
 
@@ -116,28 +104,26 @@ We framed the problem as a Markov Decision Process (MDP):
    pip install -r requirements.txt
    ```
 
-2. **Preprocess Data**
+2. **Run Pipeline (Full Dataset)**
 
    ```bash
    python src/preprocessing.py
    python src/rl_preprocessing.py
    ```
 
-3. **Train Deep Learning Model**
+3. **Train Models**
 
    ```bash
-   python src/train_dl.py
+   python src/train_dl.py            # Train Deep Learning Model
+   python src/augment_with_dl.py     # Add Risk Scores to Data
+   python src/train_rl_grid_search.py # Run RL Grid Search
    ```
 
-4. **Run RL Grid Search**
-
-   ```bash
-   python src/train_rl_grid_search.py
-   ```
-
-5. **Run Analysis**
+4. **Run Analysis**
    ```bash
    python notebooks/10_detailed_analysis.py
    ```
 
+---
 
+_Created by Sir Sloth._
