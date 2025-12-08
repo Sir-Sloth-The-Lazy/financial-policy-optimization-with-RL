@@ -79,6 +79,8 @@ _X-axis: DL Predicted Risk. Y-axis: RL Estimated Value._
 
 ## 🚀 Key Results & Conclusion
 
+![Model Comparison](model_comparison.png)
+
 | Metric            |    Deep Learning (v3)     | RL Agent (v3 - Best) | Baseline (Approve All) |
 | :---------------- | :-----------------------: | :------------------: | :--------------------: |
 | **Approach**      |     Weighted BCE Loss     |   Grid-Search CQL    |         Naive          |
