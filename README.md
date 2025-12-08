@@ -140,6 +140,4 @@ We framed the problem as a Markov Decision Process (MDP):
    python notebooks/10_detailed_analysis.py
    ```
 
----
 
-_Created by Sir Sloth, optimized for A100/M-series Mac._
