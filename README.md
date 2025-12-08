@@ -138,4 +138,48 @@ _X-axis: DL Predicted Risk. Y-axis: RL Estimated Value._
 
 ---
 
+## 📝 Detailed Analysis & Discussion
+
+### 1. Metrics: Why AUC for DL and Value for RL?
+
+- **Deep Learning (Supervised) - AUC & F1**:
+
+  - **AUC (Area Under ROC Curve)** measures the model's ability to _rank_ borrowers from lowest risk to highest risk. A high AUC (0.75) means the model successfully discriminates between reliable borrowers and defaulters.
+  - **F1 Score** balances Precision (avoiding bad loans) and Recall (catching true defaults). This is critical because defaults are rare (class imbalance).
+  - **Implication**: The DL model acts as a "Risk Filter". It doesn't care about the loan amount or interest rate, only the probability of non-payment.
+
+- **Reinforcement Learning - Estimated Policy Value**:
+  - **Policy Value** estimates the _total expected financial return_ (Profit or Loss) of the policy.
+  - **Representation**: It encodes business logic. A "safe" loan that makes $0 profit is worse than a "slightly risky" loan that makes $1000 profit.
+  - **Implication**: The RL agent acts as a "Portfolio Manager", trying to maximize yield.
+
+### 2. Policy Comparison: The Divergence
+
+- **The DL Policy**: Implicitly says "Approve if $P(Default) < Threshold$". It is risk-averse.
+- **The RL Policy**: Explicitly learns "Approve if $Q(Approve) > Q(Deny)$". It is reward-seeking.
+
+**Conflict Example**:
+Consider an applicant with **High Interest Rate (20%)** and **High Default Risk (25%)**.
+
+- **DL Model**: Sees 25% risk -> **DENY**.
+- **RL Agent**: Sees potential 20% profit. If the penalty for default isn't set high enough (e.g., >4x principal), the agent might "gamble" on this loan. This explains why the RL agent approves ~90% of applicants—it is "chasing yield," betting that the high interest income from successful loans will offset the defaults.
+
+### 3. Future Steps & Deployment Strategy
+
+**Q: Which model would you deploy?**
+**A: The Deep Learning Classifier.**
+
+- **Reason**: It is stable, interpretable, and effectively minimizes the primary risk (default). The RL agent is currently too aggressive/risky for a real-world financial institution.
+
+**Q: What are the limitations?**
+
+- **Rejection Bias**: We only have data on _approved_ loans. We do not know if rejected applicants would have actually defaulted. This biases both models to be overly conservative (or overfit to specific approved profiles).
+- **Stationarity**: Economic conditions change. A model trained on 2015 data might fail in 2020.
+
+**Q: What next?**
+
+1.  **Collect "Rejection" Data**: Run a small "Randomized Control Trial" (approve a random 1% of rejected applicants) to gather ground-truth labels for the "Deny" region of the data manifold.
+2.  **Hybrid Model**: Use the DL model as a "Safety Guardrail" (hard veto on high risk) and the RL agent to optimize interest rates within the "Safe" pool.
+3.  **Online RL**: Use a simulator (World Model) constructed from the DL model to train the RL agent, allowing it to explore the counterfactual impact of "Denying" loans it historically approved.
+
 _Created by Sir Sloth._
