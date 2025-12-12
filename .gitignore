@@ -205,3 +205,34 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+# .gitignore
+__pycache__/
+*.ipynb_checkpoints
+.DS_Store
+.env
+env/
+venv/
+.venv/
+
+# Data
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+*.csv
+*.zip
+*.npy
+
+
+
+# Logs
+logs/
+d3rlpy_logs/
+runs/
+
+# IDE
+.vscode/
+.idea/
+
+# Agent Artifacts
+.gemini/
